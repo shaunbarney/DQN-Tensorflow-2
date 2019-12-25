@@ -5,7 +5,7 @@ from model import Model
 
 
 class Agent:
-    def __init__(self, input_shape, num_actions, hidden_units, lr, gamma, replace, epsilon=1.0, epsilon_min=0.01,      epsilon_dec=0.99, mem_size=int(1e6), batch_size=20, q_eval_fname='q_eval.h5', q_target_fname='q_next.h5'):
+    def __init__(self, input_shape, num_actions, hidden_units, lr, gamma, replace, epsilon=1.0, epsilon_min=0.01, epsilon_dec=0.999, mem_size=int(1e6), batch_size=20, q_eval_fname='q_eval.h5', q_target_fname='q_next.h5'):
         self.action_space = [i for i in range(num_actions)]
         self.num_actions = num_actions
         self.gamma = gamma
@@ -46,7 +46,6 @@ class Agent:
 
         return action
 
-
     @tf.function
     def learn(self):
         if self.memory.mem_counter < self.batch_size:
@@ -63,6 +62,8 @@ class Agent:
             loss = self.loss_object(actual_values, selected_actions)
         gradients = tape.gradients(loss, self.q_eval.trainable_variables)
         self.optimizer.apply_gradients(zip(gradients, self.q_eval.trainable_variables))
+        self.epsilon = self.epsilon * self.eps_dec if self.epsilon > self.eps_min else self.eps_min
+        self.learn_step += 1
 
     def save_models(self):
         print("... Saving models ...")
