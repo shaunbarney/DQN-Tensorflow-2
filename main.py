@@ -4,14 +4,44 @@ from datetime import datetime
 from dqn import Agent
 
 TRAIN = True
+NEGATIVE_REWARD = 200
 
-def train(env, agent):
+def play_game(env: gym.Env, agent: Agent):
+    rewards = 0
+    done = False
+    state = env.reset()
+    while not done:
+        action = agent.choose_action(state)
+        new_state, reward, done, _ = env.step(action)
+        rewards += reward
+        if done:
+            reward -= NEGATIVE_REWARD
+            env.reset()
+        
+        agent.store_transition(state, action, reward, new_state, done)
+        agent.learn()
+    
+    return rewards
+
+
+def train(env: gym.Env, agent: Agent):
+    N = 5000
+    total_rewards = np.empty(N)
     current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     log_dir = 'logs/dqn/' + current_time
     summary_writer = tf.summary.create_file_writer(log_dir)
+    for n in range(N):
+        total_reward = play_game(env, agent)
+        total_rewards[n] = total_reward
+        avg_rewards = total_rewards[max(0, n - 100):(n + 1)].mean()
+        with summary_writer.as_default():
+            tf.summary.scalar('episode reward', total_reward, step=n)
+            tf.summary.scalar('running avg reward(100)', avg_rewards, step=n)
+        if n % 100 == 0:
+            print("episode:", n, "episode reward:", total_reward, "eps:", epsilon, "avg reward (last 100):", avg_rewards)
+    print("avg reward for last 100 episodes:", avg_rewards)
 
-
-def test(env, agent):
+def test(env: gym.Env, agent: Agent):
     pass
 
 if __name__ == '__main__':
