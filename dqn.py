@@ -19,7 +19,7 @@ class Agent:
         self.learn_step = 0
         self.memory = ReplayMemory(mem_size, input_shape)
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=lr)
-        self.loss_object=tf.keras.losses.mean_squared_error()
+        self.loss_object=tf.keras.losses.mean_squared_error
         self.loss_metric=tf.keras.metrics.Mean(name='Loss')
         self.q_eval = Model(input_shape, hidden_units, num_actions)
         self.q_next = Model(input_shape, hidden_units, num_actions)

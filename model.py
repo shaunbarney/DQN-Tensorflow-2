@@ -3,7 +3,7 @@ import tensorflow as tf
 class Model(tf.keras.Model):
     def __init__(self, input_shape, hidden_units, num_actions):
         super(Model, self).__init__()
-        self.input_layer = tf.keras.Input(shape=(input_shape,))
+        self.input_layer = tf.keras.Input(shape=(*input_shape,))
         self.hidden_layers = []
         for units in hidden_units:
             self.hidden_layers.append(tf.keras.layers.Dense(units, activation='relu'))
