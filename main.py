@@ -5,7 +5,7 @@ from datetime import datetime
 from dqn import Agent
 
 TRAIN = True
-NEGATIVE_REWARD = 200
+NEGATIVE_REWARD = 0
 
 def play_game(env: gym.Env, agent: Agent):
     rewards = 0
@@ -27,7 +27,8 @@ def play_game(env: gym.Env, agent: Agent):
 
 
 def train(env: gym.Env, agent: Agent):
-    N = 50
+    best = 0
+    N = 50000
     total_rewards = np.empty(N)
     current_time = datetime.now().strftime("%Y%m%d-%H%M%S")
     log_dir = 'logs/dqn/' + current_time
@@ -39,18 +40,21 @@ def train(env: gym.Env, agent: Agent):
         with summary_writer.as_default():
             tf.summary.scalar('episode reward', total_reward, step=n)
             tf.summary.scalar('running avg reward(100)', avg_rewards, step=n)
-            tf.summary.scalar('epsilon', agent.epsilon, step=n)
         if n % 100 == 0:
-            print("episode:", n, "episode reward:", total_reward, "eps:", agent.epsilon, "avg reward (last 100):", avg_rewards)
+            print("episode:", n, "episode reward:", total_reward, "avg reward (last 100):", avg_rewards)
+        if avg_rewards > best:
+            print(f"New best by {avg_rewards-best:.3f}")
+            best = avg_rewards
+            agent.save_models()
+            
     print("avg reward for last 100 episodes:", avg_rewards)
-    agent.save_models()
 
 def test(env: gym.Env, agent: Agent):
     pass
 
 if __name__ == '__main__':
     env = gym.make('CartPole-v0')
-    lr = 0.0005
+    lr = 0.00025
     n_games = 500
     input_shape = env.observation_space.shape
     num_actions = env.action_space.n
