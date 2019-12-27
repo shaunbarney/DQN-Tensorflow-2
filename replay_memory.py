@@ -23,6 +23,7 @@ class ReplayMemory:
 
     def sample_memory(self, batch_size):
         max_mem = min(self.mem_counter, self.mem_size)
+        print(f"mc: {self.mem_counter}\tms: {self.mem_size}\tmm: {max_mem}\tbs: {batch_size}")
         batch = np.random.choice(max_mem, batch_size, replace=False)
 
         states = self.state[batch]

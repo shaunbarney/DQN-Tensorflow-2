@@ -20,13 +20,14 @@ def play_game(env: gym.Env, agent: Agent):
             env.reset()
         
         agent.store_transition(state, action, reward, new_state, done)
-        agent.learn()
+        if agent.memory.mem_counter > agent.batch_size:
+            agent.learn()
     
     return rewards
 
 
 def train(env: gym.Env, agent: Agent):
-    N = 5000
+    N = 50000
     total_rewards = np.empty(N)
     current_time = datetime.now().strftime("%Y%m%d-%H%M%S")
     log_dir = 'logs/dqn/' + current_time
@@ -38,6 +39,7 @@ def train(env: gym.Env, agent: Agent):
         with summary_writer.as_default():
             tf.summary.scalar('episode reward', total_reward, step=n)
             tf.summary.scalar('running avg reward(100)', avg_rewards, step=n)
+            tf.summary.scalar('epsilon', agent.epsilon, step=n)
         if n % 100 == 0:
             print("episode:", n, "episode reward:", total_reward, "eps:", agent.epsilon, "avg reward (last 100):", avg_rewards)
     print("avg reward for last 100 episodes:", avg_rewards)

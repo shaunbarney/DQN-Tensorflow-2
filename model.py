@@ -1,17 +1,16 @@
 import tensorflow as tf
 
 class Model(tf.keras.Model):
-    def __init__(self, input_shape, hidden_units, num_actions):
+    def __init__(self, hidden_units, num_actions):
         super(Model, self).__init__()
-        self.input_layer = tf.keras.Input(shape=(*input_shape,))
         self.hidden_layers = []
-        for units in hidden_units:
-            self.hidden_layers.append(tf.keras.layers.Dense(units, activation='relu'))
-        self.output_layer = tf.keras.layers.Dense(num_actions, activation='linear')
+        for i, units in enumerate(hidden_units):
+            self.hidden_layers.append(tf.keras.layers.Dense(units, activation='relu', name=f"D_{i}"))
+        self.output_layer = tf.keras.layers.Dense(num_actions, activation='linear', name="Output")
 
     @tf.function
     def call(self, inputs):
-        x = self.input_layer(inputs)
+        x = inputs
         for layer in self.hidden_layers:
             x = layer(x)
         return self.output_layer(x)

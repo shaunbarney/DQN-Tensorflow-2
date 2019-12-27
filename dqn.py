@@ -6,6 +6,7 @@ from model import Model
 
 class Agent:
     def __init__(self, input_shape, num_actions, hidden_units, lr, gamma, replace, epsilon=1.0, epsilon_min=0.01, epsilon_dec=0.999, mem_size=int(1e6), batch_size=20, q_eval_fname='q_eval.h5', q_target_fname='q_next.h5'):
+        self.input_shape = input_shape
         self.action_space = [i for i in range(num_actions)]
         self.num_actions = num_actions
         self.gamma = gamma
@@ -32,7 +33,9 @@ class Agent:
         self.memory.store_transition(state, action, reward, new_state, done)
 
     def get_targets(self, state):
-        return self.q_next(np.atleast_2d(state.astype(np.float32)))
+        ret = self.q_next(state)
+        print("Returning")
+        return ret
     
     def get_action(self, state):
         return self.q_eval(np.atleast_2d(state.astype(np.float32)))
@@ -48,20 +51,17 @@ class Agent:
 
     @tf.function
     def learn(self):
-        if self.memory.mem_counter < self.batch_size:
-            pass
-        
         states, actions, rewards, new_states, dones = self.memory.sample_memory(self.batch_size)
 
-        value_next = np.max(self.get_targets(new_states), axis=1)
-        actual_values = np.where(dones, rewards, rewards+self.gamma*value_next)
+        value_next = tf.keras.backend.max(self.get_targets(new_states), axis=1)
+        actual_values = tf.where(dones, rewards, rewards+self.gamma*value_next)
 
         with tf.GradientTape as tape:
             one_hot_actions = tf.one_hot(actions, self.num_actions) 
             selected_actions = tf.math.reduce_sum(self.get_action(states) * one_hot_actions, axis=1)
             loss = self.loss_object(actual_values, selected_actions)
-        gradients = tape.gradients(loss, self.q_eval.trainable_variables)
-        self.optimizer.apply_gradients(zip(gradients, self.q_eval.trainable_variables))
+            gradients = tape.gradients(loss, self.q_eval.trainable_variables)
+            self.optimizer.apply_gradients(zip(gradients, self.q_eval.trainable_variables))
         self.epsilon = self.epsilon * self.eps_dec if self.epsilon > self.eps_min else self.eps_min
         self.learn_step += 1
 
