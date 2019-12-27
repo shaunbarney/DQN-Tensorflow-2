@@ -5,7 +5,7 @@ from model import Model
 
 
 class Agent:
-    def __init__(self, input_shape, num_actions, hidden_units, lr, gamma, replace, epsilon=1.0, epsilon_min=0.01, epsilon_dec=0.9999, mem_size=int(1e6), batch_size=20, q_eval_fname='q_eval.h5', q_target_fname='q_next.h5'):
+    def __init__(self, input_shape, num_actions, hidden_units, lr, gamma, replace, epsilon=1.0, epsilon_min=0.01, epsilon_dec=0.999, mem_size=int(1e4), batch_size=32, q_eval_fname='q_eval.h5', q_target_fname='q_next.h5'):
         self.input_shape = input_shape
         self.action_space = [i for i in range(num_actions)]
         self.num_actions = num_actions
@@ -27,7 +27,8 @@ class Agent:
 
     def replace_target_network(self):
         if self.replace is not None and self.learn_step % self.replace == 0:
-            self.q_next.copy_weights(self.q_eval)
+            for v1, v2 in zip(self.q_next.trainable_variables, self.q_eval.trainable_variables):
+                v1.assign(v2.numpy())
 
     def store_transition(self, state, action, reward, new_state, done):
         self.memory.store_transition(state, action, reward, new_state, done)
@@ -47,9 +48,11 @@ class Agent:
 
         return action
 
-    @tf.function
+    # @tf.function
     def learn(self):
         states, actions, rewards, new_states, dones = self.memory.sample_memory(self.batch_size)
+        self.replace_target_network()
+
         value_next = tf.keras.backend.max(self.get_targets(new_states), axis=1)
         actual_values = tf.where(dones, rewards, rewards+self.gamma*value_next)
 
@@ -57,6 +60,8 @@ class Agent:
             one_hot_actions = tf.one_hot(actions, self.num_actions) 
             selected_actions = tf.math.reduce_sum(self.get_action(states) * one_hot_actions, axis=1)
             loss = self.loss_object(actual_values, selected_actions)
+        print(self.q_eval.trainable_variables)
+        assert False
         gradients = tape.gradient(loss, self.q_eval.trainable_variables)
         self.optimizer.apply_gradients(zip(gradients, self.q_eval.trainable_variables))
         self.epsilon = self.epsilon * self.eps_dec if self.epsilon > self.eps_min else self.eps_min

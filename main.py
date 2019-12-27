@@ -41,7 +41,7 @@ def train(env: gym.Env, agent: Agent):
             tf.summary.scalar('episode reward', total_reward, step=n)
             tf.summary.scalar('running avg reward(100)', avg_rewards, step=n)
         if n % 100 == 0:
-            print("episode:", n, "episode reward:", total_reward, "avg reward (last 100):", avg_rewards)
+            print("episode:", n, "episode reward:", total_reward, "epsilon:", agent.epsilon, "avg reward (last 100):", avg_rewards)
         if avg_rewards > best:
             print(f"New best by {avg_rewards-best:.3f}")
             best = avg_rewards
@@ -54,12 +54,14 @@ def test(env: gym.Env, agent: Agent):
 
 if __name__ == '__main__':
     env = gym.make('CartPole-v0')
-    lr = 0.00025
+    batch_size = 32
+    lr = 0.001
     n_games = 500
     input_shape = env.observation_space.shape
     num_actions = env.action_space.n
-    hidden_units = [32, 32]
-    gamma = 0.99
-    replace = 1000
-    agent = Agent(input_shape, num_actions, hidden_units, lr, gamma, replace)
+    hidden_units = [32, 64]
+    gamma = 0.9
+    replace = 100
+    print(f"lr:{lr}\thidden:{hidden_units}\tgamme:{gamma}\treplace:{replace}\tbatch:{batch_size}")
+    agent = Agent(input_shape, num_actions, hidden_units, lr, gamma, replace, batch_size=batch_size)
     train(env, agent) if TRAIN else test(env, agent)

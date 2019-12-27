@@ -18,7 +18,7 @@ class ReplayMemory:
         self.action[index] = action
         self.reward[index] = reward
         self.new_state[index] = new_state
-        self.done[index] = done
+        self.done[index] = int(1 - done)
         self.mem_counter += 1
 
     def sample_memory(self, batch_size):
