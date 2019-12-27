@@ -27,7 +27,7 @@ def play_game(env: gym.Env, agent: Agent):
 
 
 def train(env: gym.Env, agent: Agent):
-    N = 50000
+    N = 50
     total_rewards = np.empty(N)
     current_time = datetime.now().strftime("%Y%m%d-%H%M%S")
     log_dir = 'logs/dqn/' + current_time
@@ -43,6 +43,7 @@ def train(env: gym.Env, agent: Agent):
         if n % 100 == 0:
             print("episode:", n, "episode reward:", total_reward, "eps:", agent.epsilon, "avg reward (last 100):", avg_rewards)
     print("avg reward for last 100 episodes:", avg_rewards)
+    agent.save_models()
 
 def test(env: gym.Env, agent: Agent):
     pass
